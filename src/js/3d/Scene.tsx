@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
+import * as THREE from 'three'
+import { TorusKnot } from '@react-three/drei'
 import { useCanvas } from '../../context/CanvasContext'
 
 import Lighting from './setup/Lighting'
 import Box from './objects/Box'
+import Tool from './objects/Tool'
 
 export default function Scene() {
 	const { setCanvasLoaded } = useCanvas()
@@ -16,8 +19,16 @@ export default function Scene() {
 		<>
 			<Lighting />
 
-			<Box position={[-1.2, 0, 0]} />
-      <Box position={[1.2, 0, 0]} />
+			{/* <Box position={[-1.2, 0, 0]} />
+      <Box position={[1.2, 0, 0]} /> */}
+			<Tool>
+				<TorusKnot position={[-1.2, 0, 0]} args={[0.4, 0.15, 220, 60]} />
+			</Tool>
+
+			<mesh name="Ground Shadow" rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
+				<planeGeometry args={[9, 9, 1, 1]} />
+				<shadowMaterial color={0x000000} opacity={0.25} side={THREE.DoubleSide} />
+			</mesh>
 		</>
 	);
 }

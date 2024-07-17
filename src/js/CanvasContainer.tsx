@@ -20,9 +20,14 @@ export default function CanvasContainer() {
 				</div>
 			</div>
 
-			<Canvas shadows>
-			<OrbitControls />
-			<PerspectiveCamera />
+			<Canvas
+				shadows
+				gl={{ antialias: true, stencil: true, localClippingEnabled: true}}>
+				<OrbitControls
+					minDistance={2}
+					maxDistance={20}
+				/>
+				<PerspectiveCamera position={[2, 2, 2]} makeDefault/>
 
 				<Suspense fallback={<Loading />}>
 					<Scene />
