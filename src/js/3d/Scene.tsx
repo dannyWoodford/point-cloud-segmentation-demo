@@ -12,7 +12,7 @@ import CtScanHead from './objects/CtScanHead'
 import SkullPointCloud from './objects/SkullPointCloud'
 
 export default function Scene() {
-	const { setCanvasLoaded } = useCanvas()
+	const { setCanvasLoaded, modelSize } = useCanvas()
 
 		// Initialize and Reset timeline
 	useEffect(() => {
@@ -21,26 +21,31 @@ export default function Scene() {
 
 	return (
 		<group>
-			<Lighting />
+			{/* <Lighting /> */}
 
 			{/* <Box position={[-1.2, 0, 0]} />
       <Box position={[1.2, 0, 0]} /> */}
-			<Tool>
 				{/* <TorusKnot 
 					// position={[-1.2, 0, 0]} 
 					args={[0.4, 0.15, 220, 60]} 
 					/> */}
-					{/* <SimpleTest /> */}
+
+			<Tool>
 				<CtScanLung />
 			</Tool>
-
+			
+				{/* <CtScanLung /> */}
 			{/* <CtScanHead /> */}
+
+					{/* <SimpleTest /> */}
+			
+
 			{/* <SkullPointCloud /> */}
 
-			<mesh name="Ground Shadow" rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
-				<planeGeometry args={[9, 9, 1, 1]} />
+			{/* <mesh name="Ground Shadow" rotation={[-Math.PI / 2, 0, 0]} position={[0, -modelSize / 2, 0]} receiveShadow>
+				<planeGeometry args={[modelSize * 4, modelSize * 4]} />
 				<shadowMaterial color={0x000000} opacity={0.25} side={THREE.DoubleSide} />
-			</mesh>
+			</mesh> */}
 		</group>
 	);
 }

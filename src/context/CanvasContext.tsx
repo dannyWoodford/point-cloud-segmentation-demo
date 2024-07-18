@@ -1,9 +1,14 @@
+// import * as THREE from 'three'; // Importing THREE for Vector3
 import React, { createContext, useContext, useMemo, ReactNode, useState } from 'react';
 
 type CanvasContextType = {
   isDev: boolean;
 	canvasLoaded: boolean;
 	setCanvasLoaded: (canvasLoaded: boolean) => void;
+	modelSize: number;
+	setModelSize: (modelSize: number) => void;
+	// modelSize: THREE.Vector3;
+	// setModelSize: (modelSize: THREE.Vector3) => void;
 };
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -15,8 +20,10 @@ interface CanvasProviderProps {
 const CanvasProvider: React.FC<CanvasProviderProps> = ({ children }) => {
   const isDev = process.env.NODE_ENV === 'development';
 	const [canvasLoaded, setCanvasLoaded] = useState(false);
+	const [modelSize, setModelSize] = useState(0);
+	// const [modelSize, setModelSize] = useState(new THREE.Vector3());
 
-	const value = useMemo(() => ({ isDev, canvasLoaded, setCanvasLoaded }), [isDev, canvasLoaded]);
+	const value = useMemo(() => ({ isDev, canvasLoaded, setCanvasLoaded, modelSize, setModelSize }), [isDev, canvasLoaded, modelSize]);
 
   return <CanvasContext.Provider value={value}>{children}</CanvasContext.Provider>;
 };

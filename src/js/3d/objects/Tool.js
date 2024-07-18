@@ -2,7 +2,8 @@ import React, { useRef, useEffect, useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useHelper } from '@react-three/drei'
-import { useControls } from 'leva'
+import { useControls, folder } from 'leva'
+import { useCanvas } from '../../../context/CanvasContext'
 
 
 // function PlaneStencilGroup({ meshObj, plane, renderOrder }) {
@@ -60,24 +61,6 @@ import { useControls } from 'leva'
 // 	)
 // }
 
-function findHighestLevelGeometry(object) {
-	let highestLevelGeometry = null
-
-	function traverseChildren(obj) {
-		if (obj.isMesh && obj.geometry) {
-			highestLevelGeometry = obj.geometry
-		}
-
-		obj.children.forEach((child) => {
-			traverseChildren(child)
-		})
-	}
-
-	traverseChildren(object)
-
-	return highestLevelGeometry
-}
-
 function findHighestLevelMesh(object) {
 	let highestMesh = null
 
@@ -104,6 +87,10 @@ function findHighestLevelPoints(object) {
 
 
 const Tool = ({ children }) => {
+	const { modelSize } = useCanvas()
+
+	const scanDimention = 400
+
 	// const [meshList, setMeshList] = useState([])
 
 	const childrenRef = useRef(null)
@@ -113,17 +100,18 @@ const Tool = ({ children }) => {
 	// 	if (!childrenRef.current) return
 
 	// 	// Set objects to clip
-	// 	setMeshList(childrenRef.current.children) 
+	// 	setMeshList(childrenRef.current.children)
 	// }, [children])
 
 	const { scene, camera, gl } = useThree()
 
-	const { animate } = useControls({
-		animate: {
-			label: 'Animate',
-			value: true,
-		},
-	})
+	// const { animate } = useControls({
+	// 	animate: {
+	// 		label: 'Animate',
+	// 		value: true,
+	// 	},
+	// })
+
 
 	const planeXControl = useControls(
 		'planeX',
@@ -139,8 +127,8 @@ const Tool = ({ children }) => {
 			constant: {
 				label: 'constant',
 				value: 0,
-				min: -1,
-				max: 1,
+				min: -scanDimention / 2,
+				max: scanDimention / 2,
 			},
 		},
 		{
@@ -162,8 +150,8 @@ const Tool = ({ children }) => {
 			constant: {
 				label: 'constant',
 				value: 0,
-				min: -1,
-				max: 1,
+				min: -scanDimention / 2,
+				max: scanDimention / 2,
 			},
 		},
 		{
@@ -185,8 +173,8 @@ const Tool = ({ children }) => {
 			constant: {
 				label: 'constant',
 				value: 0,
-				min: -1,
-				max: 1,
+				min: -scanDimention / 2,
+				max: scanDimention / 2,
 			},
 		},
 		{
@@ -195,8 +183,6 @@ const Tool = ({ children }) => {
 	)
 
 	const createPlaneStencilGroup = (geometry, plane, renderOrder) => {
-		console.log('%cgeometry', 'color:red;font-size:14px;', geometry)
-
 		const group = new THREE.Group()
 		const baseMat = new THREE.MeshBasicMaterial()
 		baseMat.depthWrite = false
@@ -230,6 +216,47 @@ const Tool = ({ children }) => {
 		return group
 	}
 
+	const createPlaneStencilGroupPoints = (geometry, plane, renderOrder) => {
+		// console.log('%cgeometry', 'color:red;font-size:14px;', geometry)
+
+		const group = new THREE.Group()
+		// const baseMat = new THREE.MeshBasicMaterial()
+		const baseMat = new THREE.PointsMaterial()
+		baseMat.depthWrite = false
+		baseMat.depthTest = false
+		baseMat.colorWrite = false
+		baseMat.stencilWrite = true
+		baseMat.stencilFunc = THREE.AlwaysStencilFunc
+
+		const mat0 = baseMat.clone()
+		mat0.side = THREE.BackSide
+		mat0.clippingPlanes = [plane]
+		mat0.stencilFail = THREE.IncrementWrapStencilOp
+		mat0.stencilZFail = THREE.IncrementWrapStencilOp
+		mat0.stencilZPass = THREE.IncrementWrapStencilOp
+
+		// const mesh0 = new THREE.Mesh(geometry, mat0)
+		const mesh0 = new THREE.Points(geometry, mat0)
+		mesh0.renderOrder = renderOrder
+		group.add(mesh0)
+
+		const mat1 = baseMat.clone()
+		mat1.side = THREE.FrontSide
+		mat1.clippingPlanes = [plane]
+		mat1.stencilFail = THREE.DecrementWrapStencilOp
+		mat1.stencilZFail = THREE.DecrementWrapStencilOp
+		mat1.stencilZPass = THREE.DecrementWrapStencilOp
+
+		// const mesh1 = new THREE.Mesh(geometry, mat1)
+		const mesh1 = new THREE.Points(geometry, mat1)
+		mesh1.renderOrder = renderOrder
+		group.add(mesh1)
+
+		// console.log('%cgroup', 'color:red;font-size:14px;', group)
+
+		return group
+	}
+
 	const object = useMemo(() => new THREE.Group(), [])
 
 	const xPlane = useRef()
@@ -238,9 +265,13 @@ const Tool = ({ children }) => {
 
 	const planes = useMemo(() => [xPlane, yPlane, zPlane], [])
 
-	useHelper(planeXControl.displayHelper && xPlane, THREE.PlaneHelper, 2, 'red')
-	useHelper(planeYControl.displayHelper && yPlane, THREE.PlaneHelper, 2, 'green')
-	useHelper(planeZControl.displayHelper && zPlane, THREE.PlaneHelper, 2, 'blue')
+	// useEffect(() => {
+	// 	console.log('%cmodelSize', 'color:red;font-size:14px;', modelSize)
+	// }, [modelSize])
+
+	useHelper(planeXControl.displayHelper && xPlane, THREE.PlaneHelper, modelSize, 'red')
+	useHelper(planeYControl.displayHelper && yPlane, THREE.PlaneHelper, modelSize, 'green')
+	useHelper(planeZControl.displayHelper && zPlane, THREE.PlaneHelper, modelSize, 'blue')
 
 	// const ham = useMemo(() => {
 	// 	if (!meshList.length) return
@@ -297,8 +328,7 @@ const Tool = ({ children }) => {
 	// 	)
 	// }, [meshList, planes])
 
-
-	const [planeObjectsState, setPlaneObjectsState] = useState([])
+	// const [planeObjectsState, setPlaneObjectsState] = useState([])
 
 	useEffect(() => {
 		if (!planes[0].current) return
@@ -323,121 +353,134 @@ const Tool = ({ children }) => {
 		// let geometry = childrenRef.current.children[0].geometry
 
 		// if (!childrenRef.current.children.length) return
-		
+
 		let modelMesh = findHighestLevelMesh(childrenRef.current)
 		let modelPoints = findHighestLevelPoints(childrenRef.current)
-		
-		console.log('%cchildrenRef.current', 'color:red;font-size:14px;', childrenRef.current)
-		console.log('%cmodelPoints', 'color:red;font-size:14px;', modelPoints)
-
-		if (!modelMesh) return
-		
-
-		// console.log('%cmodelMesh', 'color:red;font-size:14px;', modelMesh)
-
-		const geometry = modelMesh.geometry
-		// const geometry = findHighestLevelGeometry(childrenRef.current)
-		// console.log(highestLevelGeometry)
 
 		// console.log('%cchildrenRef.current', 'color:red;font-size:14px;', childrenRef.current)
-		// console.log('%cgeometry', 'color:red;font-size:14px;', geometry)
+		// console.log('%cmodelPoints', 'color:red;font-size:14px;', modelPoints)
 
-		// Set up clip plane rendering
-		const planeObjectsLocal = []
-		// const planeGeom = new THREE.PlaneGeometry(4, 4)
+		if (modelMesh) {
+			const geometry = modelMesh.geometry
 
-		for (let i = 0; i < 3; i++) {
-			const poGroup = new THREE.Group()
-			const plane = planes[i].current
-			// console.log('%cplane', 'color:red;font-size:14px;', plane)
+			// Set up clip plane rendering
+			for (let i = 0; i < 3; i++) {
+				const poGroup = new THREE.Group()
+				const plane = planes[i].current
 
-			const stencilGroup = createPlaneStencilGroup(geometry, plane, i + 1)
+				const stencilGroup = createPlaneStencilGroup(geometry, plane, i + 1)
 
-			// plane is clipped by the other clipping planes
-			// const planeMat = new THREE.MeshStandardMaterial({
-			// 	color: 'yellow',
-			// 	metalness: 0.1,
-			// 	roughness: 0.75,
-			// 	// clippingPlanes: null,
-			// 	clippingPlanes: planes.filter((p) => p.current !== plane).map((p) => p.current),
-			// 	stencilWrite: true,
-			// 	stencilRef: 0,
-			// 	stencilFunc: THREE.NotEqualStencilFunc,
-			// 	stencilFail: THREE.ReplaceStencilOp,
-			// 	stencilZFail: THREE.ReplaceStencilOp,
-			// 	stencilZPass: THREE.ReplaceStencilOp,
-			// })
-			// const po = new THREE.Mesh(planeGeom, planeMat)
-			// po.name = plane.name
-			// po.onAfterRender = (gl) => gl.clearStencil()
+				object.add(stencilGroup)
+				scene.add(poGroup)
+			}
 
-			// po.renderOrder = i + 1.1
+			const modelMaterial = modelMesh.material
+			modelMaterial.clipShadows = true
+			modelMaterial.clippingPlanes = planes.map((p) => p.current)
 
-			// console.log('%cpo', 'color:red;font-size:14px;', po );
+			// add the color
+			const clippedColorFront = new THREE.Mesh(geometry, modelMaterial)
+			clippedColorFront.scale.copy(modelMesh.scale)
+			clippedColorFront.castShadow = true
+			clippedColorFront.renderOrder = 6
 
-			object.add(stencilGroup)
-			// poGroup.add(po)
-			// planeObjectsLocal.push(po)
-			scene.add(poGroup)
+			object.add(clippedColorFront)
 		}
 
-		// console.log('%cplaneObjectsLocal', 'color:red;font-size:14px;', planeObjectsLocal );
-		setPlaneObjectsState(planeObjectsLocal)
+		if (modelPoints) {
+			const geometry = modelPoints.geometry
 
-		// const material = new THREE.MeshStandardMaterial({
-		// 	color: 'red',
-		// 	metalness: 0.1,
-		// 	roughness: 0.75,
-		// 	clippingPlanes: planes.map((p) => p.current),
-		// 	clipShadows: true,
-		// 	shadowSide: THREE.DoubleSide,
-		// })
+			// Set up clip plane rendering
+			// let planeObjects = []
+			// const planeGeom = new THREE.PlaneGeometry(200, 200)
 
-		const modelMaterial = modelMesh.material
-		modelMaterial.clipShadows = true
-		modelMaterial.clippingPlanes = planes.map((p) => p.current)
+			// Set up clip plane rendering
+			for (let i = 0; i < 3; i++) {
+				const poGroup = new THREE.Group()
+				const plane = planes[i].current
 
-		console.log('%cmodelMaterial', 'color:red;font-size:14px;', modelMaterial)
+				const stencilGroup = createPlaneStencilGroupPoints(geometry, plane, i + 1)
 
+				// // plane is clipped by the other clipping planes
+				// const planeMat = new THREE.MeshStandardMaterial({
+				// 	color: 0xe91e63,
+				// 	metalness: 0.1,
+				// 	roughness: 0.75,
+				// 	clippingPlanes: planes.filter((p) => p.current !== plane).map((p) => p.current),
+				// 	stencilWrite: true,
+				// 	stencilRef: 0,
+				// 	stencilFunc: THREE.NotEqualStencilFunc,
+				// 	stencilFail: THREE.ReplaceStencilOp,
+				// 	stencilZFail: THREE.ReplaceStencilOp,
+				// 	stencilZPass: THREE.ReplaceStencilOp,
+				// })
 
-		// add the color
-		const clippedColorFront = new THREE.Mesh(geometry, modelMaterial)
-		// console.log('%cgeometry.scale', 'color:red;font-size:14px;', geometry)
-		console.log('%cmodelMesh', 'color:red;font-size:14px;', modelMesh)
-		clippedColorFront.scale.copy(modelMesh.scale)
-		// console.log('%cclippedColorFront', 'color:red;font-size:14px;', clippedColorFront)
-		clippedColorFront.castShadow = true
-		clippedColorFront.renderOrder = 6
-		object.add(clippedColorFront)
+				// const po = new THREE.Mesh(planeGeom, planeMat)
+				// po.onAfterRender = function (gl) {
+				// 	gl.clearStencil()
+				// }
+
+				// po.renderOrder = i + 1.1
+
+				object.add(stencilGroup)
+				// poGroup.add(po)
+				// planeObjects.push(po)
+				scene.add(poGroup)
+			}
+
+			// setPlaneObjectsState(planeObjects)
+
+			const modelMaterial = modelPoints.material
+			modelMaterial.clipShadows = true
+			modelMaterial.clippingPlanes = planes.map((p) => p.current)
+
+			// add the color
+			// const clippedColorFront = new THREE.Points(geometry, modelMaterial)
+			// clippedColorFront.scale.copy(modelPoints.scale)
+			// clippedColorFront.castShadow = true
+			// clippedColorFront.renderOrder = 6
+
+			// let object = model.current
+
+			// object.updateMatrixWorld()
+
+			// const box = new THREE.Box3().setFromObject(object)
+			// const center = box.getCenter(new THREE.Vector3())
+
+			// object.position.x -= center.x
+			// object.position.y -= center.y
+			// object.position.z -= center.z
+
+			// object.add(clippedColorFront)
+		}
 	}, [scene, camera, gl, planes, object])
 
-	useFrame((state, delta) => {
-		if (animate) {
-			object.rotation.x += delta * 0.5
-			object.rotation.y += delta * 0.2
+	// useFrame((state, delta) => {
+	// 	if (animate) {
+	// 		object.rotation.x += delta * 0.5
+	// 		object.rotation.y += delta * 0.2
 
-			
-			if (objectRef.current) {
-				objectRef.current.rotation.x += delta * 0.2
-				objectRef.current.rotation.y += delta * 0.5
-			}
-		}
+	// 		if (objectRef.current) {
+	// 			objectRef.current.rotation.x += delta * 0.2
+	// 			objectRef.current.rotation.y += delta * 0.5
+	// 		}
+	// 	}
 
-		// if (!planes[0].current) return
-		// if (!planeObjectsState.length) return
+	// 	// if (!planes[0].current) return
+	// 	// if (!planeObjectsState.length) return
 
-		// console.log('%cplanes', 'color:red;font-size:14px;', planes[0].current)
-		// console.log('%cplaneObjectsState', 'color:red;font-size:14px;', planeObjectsState[0])
-		for (let i = 0; i < planeObjectsState.length; i++) {
-			const plane = planes[i].current
-			const po = planeObjectsState[i]
+	// 	// // console.log('%cplanes', 'color:red;font-size:14px;', planes[0].current)
+	// 	// // console.log('%cplaneObjectsState', 'color:red;font-size:14px;', planeObjectsState[0])
+	// 	// for (let i = 0; i < planeObjectsState.length; i++) {
+	// 	// 	const plane = planes[i].current
+	// 	// 	const po = planeObjectsState[i]
 
-			// console.log('%cplane', 'color:red;font-size:14px;', plane)
-			// console.log('%cpo', 'color:red;font-size:14px;', po)
-			plane.coplanarPoint(po.position)
-			po.lookAt(po.position.x - plane.normal.x, po.position.y - plane.normal.y, po.position.z - plane.normal.z)
-		}
-	})
+	// 	// 	// console.log('%cplane', 'color:red;font-size:14px;', plane)
+	// 	// 	// console.log('%cpo', 'color:red;font-size:14px;', po)
+	// 	// 	plane.coplanarPoint(po.position)
+	// 	// 	po.lookAt(po.position.x - plane.normal.x, po.position.y - plane.normal.y, po.position.z - plane.normal.z)
+	// 	// }
+	// })
 
 	return (
 		<group>
@@ -445,13 +488,16 @@ const Tool = ({ children }) => {
 			<plane name='yPlane' ref={yPlane} normal={new THREE.Vector3(0, -1, 0)} constant={planeYControl.constant} />
 			<plane name='zPlane' ref={zPlane} normal={new THREE.Vector3(0, 0, -1)} constant={planeZControl.constant} />
 
-			<group ref={childrenRef} 
-			// visible={false}
-			>{children}</group>
+			<group
+				ref={childrenRef}
+				// visible={false}
+			>
+				{children}
+			</group>
 
 			{/* <group ref={objectRef}>
 			</group> */}
-				{/* {ham} */}
+			{/* {ham} */}
 		</group>
 	)
 }

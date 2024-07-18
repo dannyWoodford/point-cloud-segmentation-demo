@@ -35,9 +35,10 @@ export default function CanvasContainer() {
 				>
 				<OrbitControls
 					// minDistance={2}
-					// maxDistance={20}
+					maxDistance={1500}
 				/>
-				<PerspectiveCamera position={[0, 0, 5]} 
+				<PerspectiveCamera position={[0, 0, 500]} 
+				// near={0.001}
 				// far={100000} 
 				makeDefault
 				/>
