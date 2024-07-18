@@ -21,13 +21,26 @@ export default function CanvasContainer() {
 			</div>
 
 			<Canvas
-				shadows
-				gl={{ antialias: true, stencil: true, localClippingEnabled: true}}>
+				// shadows
+				gl={{ 
+					// antialias: true,
+					// pixelRatio: devicePixelRatio,
+					// antialias: false,
+					// alpha: true,
+					// logarithmicDepthBuffer: true, 
+					antialias: true, 
+					stencil: true, 
+					localClippingEnabled: true
+				}}
+				>
 				<OrbitControls
-					minDistance={2}
-					maxDistance={20}
+					// minDistance={2}
+					// maxDistance={20}
 				/>
-				<PerspectiveCamera position={[2, 2, 2]} makeDefault/>
+				<PerspectiveCamera position={[0, 0, 5]} 
+				// far={100000} 
+				makeDefault
+				/>
 
 				<Suspense fallback={<Loading />}>
 					<Scene />
